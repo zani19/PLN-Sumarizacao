@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sumarizador de Textos em Português</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <h1>Sumarizador de Textos em Português</h1>
+
+      <div class="input-section">
+        <label for="texto-input"
+          >Insira seu texto abaixo (mínimo 100 palavras):</label
+        >
+        <textarea
+          id="texto-input"
+          placeholder="Digite ou cole seu texto aqui (100-500 palavras)..."
+        ></textarea>
+        <div class="counter">
+          <span id="contador-palavras">0</span> palavras
+          <span id="mensagem-validacao" class="mensagem-erro"></span>
+        </div>
+        <button id="btn-sumarizar" disabled>
+          <span id="btn-text">Sumarizar</span>
+          <span id="btn-spinner" style="display: none">Processando...</span>
+        </button>
+      </div>
+
+      <div class="result-section" id="resultado" style="display: none">
+        <h2>Resultado da Sumarização</h2>
+        <div class="result-box">
+          <h3>Resumo:</h3>
+          <p id="texto-resumo"></p>
+          <div class="stats">
+            <div>
+              <strong>Palavras no original:</strong>
+              <span id="contador-original">0</span>
+            </div>
+            <div>
+              <strong>Palavras no resumo:</strong>
+              <span id="contador-resumo">0</span>
+            </div>
+            <div>
+              <strong>Redução:</strong>
+              <span id="reducao">0%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const textarea = document.getElementById("texto-input");
+      const btnSumarizar = document.getElementById("btn-sumarizar");
+      const contadorPalavras = document.getElementById("contador-palavras");
+      const mensagemValidacao = document.getElementById("mensagem-validacao");
+      const resultadoSection = document.getElementById("resultado");
+      const textoResumo = document.getElementById("texto-resumo");
+      const contadorOriginal = document.getElementById("contador-original");
+      const contadorResumo = document.getElementById("contador-resumo");
+      const reducao = document.getElementById("reducao");
+
+      // Atualizar contador de palavras
+      textarea.addEventListener("input", function () {
+        const texto = this.value.trim();
+        const numPalavras = texto === "" ? 0 : texto.split(/\s+/).length;
+
+        contadorPalavras.textContent = numPalavras;
+
+        // Validação para mínimo de 100 palavras (sem máximo)
+        if (numPalavras >= 100) {
+          btnSumarizar.disabled = false;
+          mensagemValidacao.textContent = "";
+          mensagemValidacao.classList.remove("mensagem-erro");
+        } else {
+          btnSumarizar.disabled = true;
+          mensagemValidacao.textContent = "Mínimo de 100 palavras necessárias";
+          mensagemValidacao.classList.add("mensagem-erro");
+        }
+      });
+
+      // Enviar texto para sumarização
+      btnSumarizar.addEventListener("click", async function () {
+        document.getElementById("btn-text").style.display = "none";
+        document.getElementById("btn-spinner").style.display = "inline-block";
+
+        const texto = textarea.value.trim();
+
+        btnSumarizar.disabled = true;
+        btnSumarizar.textContent = "Processando...";
+
+        try {
+          const response = await fetch("/sumarizar", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ texto: texto }),
+          });
+
+          const data = await response.json();
+
+          if (data.erro) {
+            mensagemValidacao.textContent = data.erro;
+            mensagemValidacao.classList.add("mensagem-erro");
+          } else {
+            // Exibir resultados
+            textoResumo.textContent = data.resumo;
+            contadorOriginal.textContent = data.palavras_original;
+            contadorResumo.textContent = data.palavras_resumo;
+
+            const percentual = Math.round(
+              (1 - data.palavras_resumo / data.palavras_original) * 100
+            );
+            reducao.textContent = `${percentual}%`;
+
+            resultadoSection.style.display = "block";
+            mensagemValidacao.textContent = "";
+            mensagemValidacao.classList.remove("mensagem-erro");
+          }
+        } catch (error) {
+          mensagemValidacao.textContent = "Erro ao conectar com o servidor";
+          mensagemValidacao.classList.add("mensagem-erro");
+        } finally {
+          btnSumarizar.disabled = false;
+          btnSumarizar.textContent = "Sumarizar";
+          document.getElementById("btn-text").style.display = "inline-block";
+          document.getElementById("btn-spinner").style.display = "none";
+        }
+      });
+    </script>
+  </body>
+</html>
