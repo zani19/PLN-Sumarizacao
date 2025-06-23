@@ -26,6 +26,7 @@
           <span id="btn-text">Sumarizar</span>
           <span id="btn-spinner" style="display: none">Processando...</span>
         </button>
+        <button id="btn-limpar" type="button">Limpar</button>
       </div>
 
       <div class="result-section" id="resultado" style="display: none">
@@ -129,6 +130,16 @@
           document.getElementById("btn-text").style.display = "inline-block";
           document.getElementById("btn-spinner").style.display = "none";
         }
+      });
+
+      // Botão Limpar
+      document.getElementById("btn-limpar").addEventListener("click", function () {
+        textarea.value = "";
+        contadorPalavras.textContent = 0;
+        mensagemValidacao.textContent = "";
+        mensagemValidacao.classList.remove("mensagem-erro");
+        resultadoSection.style.display = "none";
+        btnSumarizar.disabled = true;
       });
     </script>
   </body>
